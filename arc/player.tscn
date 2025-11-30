@@ -1,0 +1,39 @@
+[gd_scene load_steps=7 format=3 uid="uid://8djc6vsx21p7"]
+
+[ext_resource type="Script" uid="uid://h48opa2irg1h" path="res://player.gd" id="1_4flbx"]
+[ext_resource type="Script" uid="uid://jau3mlfvviol" path="res://ai_player.gd" id="2_onrkg"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_onrkg"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i3pqv"]
+albedo_color = Color(1, 0.07450981, 0.007843138, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_i3pqv"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_onrkg"]
+
+[node name="Player" type="Node3D"]
+
+[node name="Players" type="CharacterBody3D" parent="." groups=["players"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3162775, 0)
+script = ExtResource("1_4flbx")
+is_training = true
+
+[node name="AIController3D" type="Node3D" parent="Players"]
+script = ExtResource("2_onrkg")
+control_mode = 2
+metadata/_custom_type_script = "uid://deykmcqvssbbu"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Players"]
+shape = SubResource("CapsuleShape3D_onrkg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Players"]
+material_override = SubResource("StandardMaterial3D_i3pqv")
+mesh = SubResource("CapsuleMesh_i3pqv")
+surface_material_override/0 = SubResource("StandardMaterial3D_onrkg")
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Players"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.26209688, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Players/SpringArm3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95751476, 0)

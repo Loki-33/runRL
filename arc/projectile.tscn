@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://dj0s5f71148gl"]
+
+[ext_resource type="Script" uid="uid://dgrxy2xip0mcj" path="res://projectile.gd" id="1_a85iw"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_kgu82"]
+radius = 0.25
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_a85iw"]
+albedo_color = Color(7.8425736, 0, 7.8425736, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_qa6nv"]
+radius = 0.25
+height = 0.5
+
+[node name="s" type="Area3D" groups=["projectiles"]]
+script = ExtResource("1_a85iw")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_kgu82")
+debug_color = Color(0.8507775, 0.26456112, 0.6641922, 0.41960785)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_a85iw")
+mesh = SubResource("CapsuleMesh_qa6nv")
+skeleton = NodePath("")
