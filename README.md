@@ -1,3 +1,3 @@
 ## RL GAME
 
-![Agent playing game](recoding.webm)
+![Agent playing game](recoding.mp4)
