@@ -37,7 +37,7 @@ try:
         print()
         
         episode += 1
-        time.sleep(1)  # Pause between episodes
+        time.sleep(1) 
 
 except KeyboardInterrupt:
     print("\nStopping...")

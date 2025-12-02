@@ -20,11 +20,10 @@ try:
     done = False
     
     while not done:
-        # Take screenshot
         action, _ = model.predict(obs, deterministic=True)
         obs, reward, done, info = env.step(action)
         
-        time.sleep(1/30)  # 30 FPS
+        time.sleep(1/30)  
 
 except KeyboardInterrupt:
     pass
