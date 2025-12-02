@@ -3,3 +3,4 @@ venv/
 logs/
 __pycache__/ 
 arc/yo.x86_64
+models/

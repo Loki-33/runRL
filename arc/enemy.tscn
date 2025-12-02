@@ -35,3 +35,5 @@ skeleton = NodePath("../..")
 shape = SubResource("SphereShape3D_7k104")
 
 [node name="shoot_cooldown" type="Timer" parent="Enemys"]
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="Enemys"]

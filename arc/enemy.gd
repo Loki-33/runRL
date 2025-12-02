@@ -1,14 +1,20 @@
 extends CharacterBody3D
 
-@export var speed: float = 4.0 
+@export var speed: float = 6.0
 @export var shooting_range: float =  9.0
-@export var shoot_cooldown_sec: float = 1.0
+@export var shoot_cooldown_sec: float = 1.3
 @export var roam_radius: float = 15.0
 @export var roam_speed_mult: float = 0.4
 @export var gravity: float = -9.8
 @export var fov_angle: float = 162.0
 @export var projectile_scene: PackedScene 
 @export var show_fov_debug: bool = false 
+
+
+@export var arena_min_x: float = -16.0
+@export var arena_max_x: float = 16.0
+@export var arena_min_z: float = -16.0
+@export var arena_max_z: float = 16.0
 
 var player: Node3D
 var can_shoot: bool = true 
@@ -231,15 +237,26 @@ func handle_roam_state():
 	if to_target.length() < 1.0:
 		pick_new_roam_target2()
 		return
-
+	
+	#if get_slide_collision_count()>0:
+		#var collision = get_slide_collision(0)
+		#pick_new_roam_target2()
+		#
+		#var away_dir = -collision.get_normal()
+		#velocity.x = away_dir.x * speed * roam_speed_mult
+		#velocity.z = away_dir.z * speed * roam_speed_mult
+		#return 
+		
 	# check blocked
 	var query = PhysicsRayQueryParameters3D.new()
-	query.from = global_transform.origin
-	query.to = roam_target
+	query.from = global_transform.origin + Vector3(0, 0.5, 0)
+	query.to = roam_target + Vector3(0, 0.5, 0)
 	query.exclude = [self] 
 	
 	var space_state = get_world_3d().direct_space_state
+	
 	var result = space_state.intersect_ray(query)
+
 	
 	if result:
 		pick_new_roam_target2()
@@ -284,14 +301,17 @@ func _on_body_exited(body):
 		investigating=true 
 		#print("Lost player, investigating last position: ", last_known_player_position)
 
-# TODO: ensure that the raom radius is with the arena boudanry only to prevent wall stuck
 func pick_new_roam_target2():
-	var random_angle = randf() * TAU 
-	var random_distance = randf_range(3.0, roam_radius)
+	#var random_angle = randf() * TAU 
+	#var random_distance = randf_range(3.0, roam_radius)
 	
-	roam_target = roam_center + Vector3(
-		cos(random_angle) * random_distance,
+	roam_target = Vector3(
+		randf_range(arena_min_x + 2.0, arena_max_x - 2.0),  # +2 margin from walls
 		0,
-		sin(random_angle) * random_distance
+		randf_range(arena_min_z + 2.0, arena_max_z - 2.0)   # +2 margin from walls
 	)
 	#print('New roam target: ', roam_target)
+
+func reset_enemy()->void:
+	pick_new_roam_target2()
+	print('Enemy pos reset')

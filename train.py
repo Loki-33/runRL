@@ -16,7 +16,6 @@ def make_env(env_path, port, show_window=False, seed=0, speedup=8):
             seed=seed,
             speedup=speedup
         )
-        env = StableBaselinesGodotEnv(env)
         return env 
     return _init
 
@@ -34,25 +33,24 @@ def train(env_path,
 
     print(f'Creating {n_parallel} environments....')
     base_port = 15000
-    env_fns = [
-        make_env(
-            env_path=env_path,
-            port=base_port+i,
-            show_window=(i==0),
-            seed=i,
-            speedup=speedup
-        )
-        for i in range(n_parallel)
-    ]
     
-    env = SubprocVecEnv(env_fns)
+    env = StableBaselinesGodotEnv(
+        env_path=env_path,
+        port=11008,
+        show_window=True,  # Show first environment
+        seed=0,
+        n_parallel=n_parallel,
+        speedup=speedup
+    )
+
+    
     env = VecMonitor(env, filename=os.path.join(log_dir, 'monitor'))
 
     print('ENV CREATED')
 
     print("Creating PPO model...")
     model = PPO(
-        "MlpPolicy",
+        "MultiInputPolicy",
         env,
         learning_rate=3e-4,
         n_steps=2048,

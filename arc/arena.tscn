@@ -1,7 +1,8 @@
-[gd_scene load_steps=16 format=3 uid="uid://d1ti115u3xtmp"]
+[gd_scene load_steps=17 format=3 uid="uid://d1ti115u3xtmp"]
 
 [ext_resource type="PackedScene" uid="uid://cnyfeaokr0rxk" path="res://enemy.tscn" id="1_ubfh8"]
 [ext_resource type="PackedScene" uid="uid://8djc6vsx21p7" path="res://player.tscn" id="2_444vf"]
+[ext_resource type="Script" uid="uid://b5plp1iemf8fu" path="res://addons/godot_rl_agents/sync.gd" id="3_27ga2"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_g21bf"]
 size = Vector3(40, 1, 40)
@@ -109,10 +110,16 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 0.42261824, 0.9063078, 0, -0.9063078, 0.42261824, 0, 21, 15)
 
 [node name="Enemy" parent="." instance=ExtResource("1_ubfh8")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.268173, 2.5226603, 6.332141)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.268173, 2.5226603, -4.353651)
+
+[node name="Enemy3" parent="." instance=ExtResource("1_ubfh8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.479153, 2.5226603, -3.2370787)
+
+[node name="Enemy2" parent="." instance=ExtResource("1_ubfh8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.268173, 2.5226603, 10.686461)
 
 [node name="Player" parent="." instance=ExtResource("2_444vf")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1661243, 0, 2.9342937)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.60491, 0, 6.410763)
 
 [node name="box1" type="StaticBody3D" parent="."]
 transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 1.1974597, 1.5483007, -5.7021217)
@@ -168,3 +175,7 @@ shape = SubResource("BoxShape3D_pbtuc")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="box4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.19000053, 0.0061290264, -0.92042875)
 mesh = SubResource("BoxMesh_yokb4")
+
+[node name="Sync" type="Node" parent="."]
+script = ExtResource("3_27ga2")
+metadata/_custom_type_script = "uid://b5plp1iemf8fu"

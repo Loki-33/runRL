@@ -4,7 +4,7 @@ extends CharacterBody3D
 @export var jump_velocity: float = 5.0
 @export var gravity: float = -9.8
 @export var mouse_sensitivity: float = 0.003
-@export var health: int = 3
+@export var health: int = 8
 @export var is_training: bool = false  # Set to true when training with AI
 
 var pitch: float = 0.0
@@ -33,6 +33,9 @@ func _physics_process(delta):
 		input_dir.x = ai_move_x
 		input_dir.z = ai_move_z
 		
+		if Engine.get_physics_frames()%60==0:
+						print("AI Actions: x=", ai_move_x, " z=", ai_move_z, " | Velocity: ", velocity)
+					
 		# Calculate rewards
 		if ai_controller:
 			ai_controller.calculate_step_reward(delta)
@@ -71,16 +74,22 @@ func _physics_process(delta):
 
 func take_damage():
 	health -= 1
-	#print("Player hit! Health remaining: ", health)
+	print("Player hit! Health remaining: ", health)
 	
 	if ai_controller:
 		ai_controller.on_hit_by_projectile()
 	
 	if health <= 0:
+		print('Player Died')
 		reset_player()
 
 func reset_player():
-	health = 3
-	global_position = Vector3(0, 1, 0)  # Adjust spawn position as needed
+	health = 8
+	var spawn_angle = randf() * TAU 
+	var spawn_dist = randf_range(8.0, 15.0)
+	global_position = Vector3(
+		cos(spawn_angle)*spawn_dist, 
+		1, 
+		sin(spawn_angle)*spawn_dist) 
 	velocity = Vector3.ZERO
-	#print("Player reset!")
+	print("Player reset!")

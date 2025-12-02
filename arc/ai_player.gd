@@ -2,7 +2,7 @@ extends AIController3D
 
 var episode_reward: float=0.0 
 var episode_steps: int=0
-var max_episode_steps: int =1000
+var max_episode_steps: int = 5000
 
 var last_distance_to_enemy: float =999.0
 var time_alive: float = 0.0 
@@ -26,7 +26,7 @@ func get_obs() -> Dictionary:
 	obs.append(player.global_position.z/20.0)
 	obs.append(player.velocity.x/5.0)
 	obs.append(player.velocity.z/5.0)
-		
+
 	if closest_enemy:
 		var rel_pos = closest_enemy.global_position - player.global_position
 		obs.append(clamp(rel_pos.x/40.0, -1.0, 1.0))
@@ -39,7 +39,7 @@ func get_obs() -> Dictionary:
 	else:
 		for i in range(6):
 			obs.append(0.0)
-		
+
 	var projectiles = get_tree().get_nodes_in_group('projectiles')
 	var sorted_projectiles = []
 		
@@ -58,7 +58,7 @@ func get_obs() -> Dictionary:
 			var rel_pos = proj.global_position - player.global_position
 			obs.append(clamp(rel_pos.x/20.0, -1.0, 1.0))
 			obs.append(clamp(rel_pos.z/20.0, -1.0, 1.0))
-					
+			obs.append(clamp(sorted_projectiles[i].dist / 20.0, 0.0, 1.0))		
 			if 'direction' in proj:
 				obs.append(proj.direction.x)
 				obs.append(proj.direction.z)
@@ -74,7 +74,9 @@ func get_obs() -> Dictionary:
 		var dir = Vector3(cos(angle), 0, sin(angle))
 		var distance = cast_ray_distance(player, dir, 20.0)
 		obs.append(clamp(distance/ 20.0, 0.0, 1.0))
-			
+	if obs.size() != 28:
+		print("ERROR: Expected 28 observations, got ", obs.size())
+
 	return {'obs': obs}
 	
 	
@@ -92,13 +94,21 @@ func get_action_space()->Dictionary:
 	} 
 	 
 func set_action(action) ->void:
+	print("!!! set_action CALLED !!!")  # ← Debug
+	print("Action type: ", typeof(action))
+	print("Action contents: ", action)
+	
+	if not "move" in action:
+		print("ERROR: 'move' key not found in action!")
+		return
+
 	var player = get_parent()
 	var move_x = clamp(action.move[0], -1.0, 1.0)
 	var move_z = clamp(action.move[1], -1.0, 1.0)
 	
 	player.ai_move_x = move_x 
 	player.ai_move_z = move_z  
-	
+	print("Set ai_move_x=", move_x, " ai_move_z=", move_z)
 func check_line_of_sight(from_node: Node3D, to_node: Node3D)->bool:
 	var query = PhysicsRayQueryParameters3D.new()
 	query.from = from_node.global_position + Vector3(0,1,0)
@@ -130,7 +140,13 @@ func calculate_step_reward(delta: float):
 	episode_steps += 1
 	time_alive += delta
 	
-	reward += 0.1 * delta 
+	if episode_steps >= max_episode_steps:
+		on_episode_timeout()
+		return 
+	
+	var step_reward = 0.0 
+	step_reward += 0.1 * delta
+	
 	
 	var enemies = get_tree().get_nodes_in_group('enemies')
 	if enemies.size() > 0:
@@ -142,65 +158,93 @@ func calculate_step_reward(delta: float):
 			if dist < min_distance:
 				min_distance = dist 
 				closest_enemy = enemy 
-			if min_distance > 8.0 and min_distance < 15.0:
-				reward += 0.2 * delta 
-			elif min_distance < 5.0:
-				reward -= 0.1 * delta 
-			elif min_distance > 20.0:
-				reward -=0.05 * delta 
+		
+		if min_distance > 8.0 and min_distance < 15.0:
+			reward += 0.2 * delta 
+		elif min_distance < 5.0:
+			reward -= 0.1 * delta 
+		elif min_distance > 20.0:
+			reward -=0.05 * delta 
 			
 			
-			var distance_change = min_distance - last_distance_to_enemy
-			if min_distance < 8.0 and distance_change > 0:
-				reward += 0.3 * delta 
-			last_distance_to_enemy = min_distance
+		var distance_change = min_distance - last_distance_to_enemy
+		if min_distance < 8.0 and distance_change > 0:
+			reward += 0.3 * delta 
+		last_distance_to_enemy = min_distance
 			
-			var has_los = check_line_of_sight(closest_enemy, player)
-			if not has_los and min_distance<15.0:
-				reward += 0.3 * delta 
+		var has_los = check_line_of_sight(closest_enemy, player)
+		if not has_los and min_distance<15.0:
+			reward += 0.3 * delta 
 		
-		var wall_distances = []
-		var angles = [0, PI/4, PI/2, 3*PI/4, PI, 5*PI/4, 3*PI/2, 7*PI/4]
-		for angle in angles:
-			var direction = Vector3(cos(angle), 0, sin(angle))
-			var distance = cast_ray_distance(player, direction, 20.0)
-			wall_distances.append(distance)
+	var wall_distances = []
+	var angles = [0, PI/4, PI/2, 3*PI/4, PI, 5*PI/4, 3*PI/2, 7*PI/4]
+	for angle in angles:
+		var direction = Vector3(cos(angle), 0, sin(angle))
+		var distance = cast_ray_distance(player, direction, 20.0)
+		wall_distances.append(distance)
 		
-		var min_wall_dist = wall_distances.min()
-		if min_wall_dist<2.0:
-			reward -= 0.05 * delta 
+	var min_wall_dist = wall_distances.min()
+	if min_wall_dist<2.0:
+		reward -= 0.05 * delta 
 		
-		var speed = player.velocity.length()
-		if speed <0.5:
-			reward -=0.1 * delta 
+	var speed = player.velocity.length()
+	if speed <0.5:
+		reward -=0.1 * delta 
+		
+	episode_reward += step_reward 
+	reward += step_reward
 	
 func on_hit_by_projectile()->void:
-	reward -=5.0
+	var penalty = -5.0
+	reward += penalty 
+	episode_reward += penalty 
 	hits_taken += 1
-	#print("Player hit! Total hits: ", hits_taken, " Reward: ", reward)
+	print("Player hit! Total hits: ", hits_taken, " Reward: ", episode_reward)
 		
-	if hits_taken >=3:
+	if hits_taken >=8:
 		done=true 
 		needs_reset = true 
-		reward -=10.0
-
+		var death_penalty = -10.0
+		reward += death_penalty
+		episode_reward += death_penalty
+		print("=== PLAYER DIED ===")
+		print("Episode reward: ", episode_reward)
+		print("Steps survived: ", episode_steps)
+		reset()
 func on_episode_timeout()->void:
 	reward += 10.0
+	episode_reward += 10.0
 	done = true
 	needs_reset = true 
-	print("Episode complete! Survived full duration. Final reward: ", reward)
-
+	print("=== EPISODE COMPLETE ===")
+	print("Survived full duration!")
+	print("Episode reward: ", episode_reward)
+	print("Steps: ", episode_steps)
+	print("Hits taken: ", hits_taken, "/8")
+	reset()
+	
 func reset()->void:
 	super.reset()
+	print("----------------------------------------")
+	print("EPISODE SUMMARY:")
+	print("  Total reward: ", episode_reward)
+	print("  Steps: ", episode_steps)
+	print("  Time alive: ", time_alive, "s")
+	print("  Hits taken: ", hits_taken, "/8")
+	print("----------------------------------------")
+
 	reward=0.0
+	episode_reward=0.0
 	episode_steps=0
 	time_alive=0.0
 	hits_taken=0
 	last_distance_to_enemy= 999.0
 	done=false 
 	needs_reset=false
-	
+	var enemy = get_tree().get_nodes_in_group('enemies')
 	var player = get_parent()
 	player.reset_player()
+	for e in enemy:
+		e.reset_enemy()
 	
 	print('Episode reset')
